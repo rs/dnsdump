@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -11,6 +13,14 @@ import (
 )
 
 func main() {
+	if len(os.Args) > 1 {
+		buf, err := buildQuery(os.Args[0:])
+		if err != nil {
+			panic(err.Error())
+		}
+		io.Copy(os.Stdout, bytes.NewReader(buf))
+		return
+	}
 	b, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
@@ -267,4 +277,56 @@ func typ(t dnsmessage.Type) string {
 	default:
 		return fmt.Sprintf("%d", t)
 	}
+}
+
+func buildQuery(args []string) ([]byte, error) {
+	var q dnsmessage.Question
+	q.Class = dnsmessage.ClassINET
+	q.Type = dnsmessage.TypeA
+	for _, arg := range args {
+		switch arg {
+		case "A":
+			q.Type = dnsmessage.TypeA
+		case "NS":
+			q.Type = dnsmessage.TypeNS
+		case "CNAME":
+			q.Type = dnsmessage.TypeCNAME
+		case "SOA":
+			q.Type = dnsmessage.TypeSOA
+		case "PTR":
+			q.Type = dnsmessage.TypePTR
+		case "MX":
+			q.Type = dnsmessage.TypeMX
+		case "TXT":
+			q.Type = dnsmessage.TypeTXT
+		case "AAAA":
+			q.Type = dnsmessage.TypeAAAA
+		case "SRV":
+			q.Type = dnsmessage.TypeSRV
+		case "OPT":
+			q.Type = dnsmessage.TypeOPT
+		case "WKS":
+			q.Type = dnsmessage.TypeWKS
+		case "HINFO":
+			q.Type = dnsmessage.TypeHINFO
+		case "MINFO":
+			q.Type = dnsmessage.TypeMINFO
+		case "AXFR":
+			q.Type = dnsmessage.TypeAXFR
+		case "ALL":
+			q.Type = dnsmessage.TypeALL
+		default:
+			if !strings.HasSuffix(arg, ".") {
+				arg += "."
+			}
+			q.Name = dnsmessage.MustNewName(arg)
+		}
+	}
+	builder := dnsmessage.NewBuilder(nil, dnsmessage.Header{
+		RecursionDesired: true,
+	})
+	builder.EnableCompression()
+	builder.StartQuestions()
+	builder.Question(q)
+	return builder.Finish()
 }

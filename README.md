@@ -3,13 +3,7 @@
 dnsdump is parses DNS packet in binary format, and output it in a dig-like
 format.
 
-## Install
-
-```
-go get github.com/rs/dnsdump
-```
-
-## Usage
+Examples:
 
 ```
 > echo AAABAAABAAAAAAABE3A2MS1rZXl2YWx1ZXNlcnZpY2UGaWNsb3VkA2NvbQAAHAABAAApAgAAAAAAAEUADABBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA | base64 -D | dnsdump
@@ -46,3 +40,7 @@ keyvalueservice.fe.apple-dns.net.	51	IN	AAAA	2620:149:a43:205::9
 ;; EDNS PSEUDOSECTION:
 ;; Version: 0, ext-rcode: 0; udp size: 1220
 ```
+
+## Generating a binary DNS query
+
+dnsdump AAAA example.com | curl -s https://dns.nextdns.io -H 'Content-Type:application/dns-message' --data-binary @- | dnsdump
